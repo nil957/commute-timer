@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>踩点上班 - 精准通勤计算器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            color: #888;
+            font-size: 0.9rem;
+        }
+        
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .card-title {
+            font-size: 0.85rem;
+            color: #00d9ff;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .time-input-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .time-input {
+            flex: 1;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 16px;
+            color: #fff;
+            font-size: 1.5rem;
+            text-align: center;
+            font-family: 'SF Mono', monospace;
+        }
+        
+        .time-input:focus {
+            outline: none;
+            border-color: #00d9ff;
+        }
+        
+        .segment {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .segment:last-child {
+            border-bottom: none;
+        }
+        
+        .segment-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+        
+        .segment-icon.walk { background: #4ade80; }
+        .segment-icon.metro { background: #3b82f6; }
+        .segment-icon.wait { background: #f59e0b; }
+        .segment-icon.light { background: #ef4444; }
+        
+        .segment-info {
+            flex: 1;
+        }
+        
+        .segment-name {
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+        }
+        
+        .segment-desc {
+            font-size: 0.75rem;
+            color: #666;
+        }
+        
+        .segment-time {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .segment-time input {
+            width: 60px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 8px;
+            color: #fff;
+            font-size: 1rem;
+            text-align: center;
+        }
+        
+        .segment-time input:focus {
+            outline: none;
+            border-color: #00d9ff;
+        }
+        
+        .segment-time span {
+            color: #666;
+            font-size: 0.8rem;
+        }
+        
+        .result-card {
+            background: linear-gradient(135deg, #00d9ff20, #00ff8820);
+            border: 1px solid #00d9ff50;
+        }
+        
+        .result-main {
+            text-align: center;
+            padding: 20px 0;
+        }
+        
+        .result-label {
+            font-size: 0.85rem;
+            color: #00d9ff;
+            margin-bottom: 8px;
+        }
+        
+        .result-time {
+            font-size: 3rem;
+            font-weight: bold;
+            font-family: 'SF Mono', monospace;
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .result-detail {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 8px;
+        }
+        
+        .countdown {
+            text-align: center;
+            padding: 16px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: 16px;
+        }
+        
+        .countdown-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .countdown-time {
+            font-size: 1.5rem;
+            font-family: 'SF Mono', monospace;
+            margin-top: 4px;
+        }
+        
+        .countdown-time.urgent {
+            color: #ef4444;
+            animation: pulse 1s infinite;
+        }
+        
+        .countdown-time.ok {
+            color: #4ade80;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .traffic-light {
+            margin-top: 16px;
+            padding: 16px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .traffic-light-title {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        
+        .light-config {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .light-input {
+            flex: 1;
+        }
+        
+        .light-input label {
+            display: block;
+            font-size: 0.75rem;
+            color: #888;
+            margin-bottom: 4px;
+        }
+        
+        .light-input input {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 8px;
+            color: #fff;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        
+        .light-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+        }
+        
+        .light-indicator {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #333;
+        }
+        
+        .light-indicator.red.active { background: #ef4444; box-shadow: 0 0 20px #ef4444; }
+        .light-indicator.green.active { background: #4ade80; box-shadow: 0 0 20px #4ade80; }
+        
+        .light-text {
+            font-size: 0.9rem;
+        }
+        
+        .add-segment {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px dashed rgba(255,255,255,0.2);
+            border-radius: 12px;
+            color: #666;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .add-segment:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: #00d9ff;
+            color: #00d9ff;
+        }
+        
+        .total-time {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            margin-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .total-label {
+            color: #888;
+        }
+        
+        .total-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #00d9ff;
+        }
+        
+        .btn-save {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        
+        .btn-save:hover {
+            opacity: 0.9;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 4px 8px;
+            font-size: 1.2rem;
+        }
+        
+        .delete-btn:hover {
+            color: #ef4444;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #444;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⏱️ 踩点上班</h1>
+            <p class="subtitle">精确到秒的通勤计算器</p>
+        </header>
+        
+        <div class="card">
+            <div class="card-title">🎯 目标到达时间</div>
+            <div class="time-input-group">
+                <input type="time" class="time-input" id="targetTime" value="09:00">
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">🚶 通勤路段配置</div>
+            <div id="segments">
+                <!-- 动态生成 -->
+            </div>
+            <div class="total-time">
+                <span class="total-label">总通勤时间</span>
+                <span class="total-value" id="totalTime">0 分钟</span>
+            </div>
+            <button class="add-segment" onclick="addSegment()">+ 添加路段</button>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">🚦 红绿灯配置（可选）</div>
+            <div class="traffic-light">
+                <div class="light-config">
+                    <div class="light-input">
+                        <label>红灯时长（秒）</label>
+                        <input type="number" id="redDuration" value="60" onchange="saveConfig()">
+                    </div>
+                    <div class="light-input">
+                        <label>绿灯时长（秒）</label>
+                        <input type="number" id="greenDuration" value="30" onchange="saveConfig()">
+                    </div>
+                </div>
+                <div class="light-input" style="margin-bottom: 12px;">
+                    <label>上次看到绿灯的时间（用于校准）</label>
+                    <input type="time" id="lastGreenTime" step="1" onchange="saveConfig()">
+                </div>
+                <div class="light-status">
+                    <div class="light-indicator red" id="redLight"></div>
+                    <div class="light-indicator green" id="greenLight"></div>
+                    <span class="light-text" id="lightText">等待校准...</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card result-card">
+            <div class="result-main">
+                <div class="result-label">🚪 最晚出门时间</div>
+                <div class="result-time" id="leaveTime">--:--</div>
+                <div class="result-detail" id="resultDetail">配置你的通勤路段</div>
+            </div>
+            <div class="countdown">
+                <div class="countdown-label">距离出门还有</div>
+                <div class="countdown-time ok" id="countdown">--:--:--</div>
+            </div>
+        </div>
+        
+        <button class="btn-save" onclick="saveConfig()">💾 保存配置</button>
+        
+        <footer>
+            <p>Made with ❤️ by Javis</p>
+            <p style="margin-top: 4px;">数据保存在本地浏览器</p>
+        </footer>
+    </div>
+    
+    <script>
+        // 默认路段配置
+        const defaultSegments = [
+            { icon: '🚶', type: 'walk', name: '家 → 地铁站', desc: '出门到进站', time: 8 },
+            { icon: '⏳', type: 'wait', name: '等地铁', desc: '站台等车', time: 3 },
+            { icon: '🚇', type: 'metro', name: '地铁', desc: '乘车时间', time: 25 },
+            { icon: '🚶', type: 'walk', name: '地铁站 → 公司', desc: '出站到公司楼下', time: 5 },
+            { icon: '🚦', type: 'light', name: '等红绿灯', desc: '路口平均等待', time: 1 },
+            { icon: '🛗', type: 'wait', name: '等电梯 + 上楼', desc: '到工位', time: 3 },
+        ];
+        
+        let segments = [];
+        let trafficLightConfig = {
+            redDuration: 60,
+            greenDuration: 30,
+            lastGreenTime: null
+        };
+        
+        // 加载配置
+        function loadConfig() {
+            const saved = localStorage.getItem('commuteConfig');
+            if (saved) {
+                const config = JSON.parse(saved);
+                segments = config.segments || defaultSegments;
+                trafficLightConfig = config.trafficLight || trafficLightConfig;
+                document.getElementById('targetTime').value = config.targetTime || '09:00';
+                document.getElementById('redDuration').value = trafficLightConfig.redDuration;
+                document.getElementById('greenDuration').value = trafficLightConfig.greenDuration;
+                if (trafficLightConfig.lastGreenTime) {
+                    document.getElementById('lastGreenTime').value = trafficLightConfig.lastGreenTime;
+                }
+            } else {
+                segments = [...defaultSegments];
+            }
+            renderSegments();
+        }
+        
+        // 保存配置
+        function saveConfig() {
+            trafficLightConfig.redDuration = parseInt(document.getElementById('redDuration').value) || 60;
+            trafficLightConfig.greenDuration = parseInt(document.getElementById('greenDuration').value) || 30;
+            trafficLightConfig.lastGreenTime = document.getElementById('lastGreenTime').value || null;
+            
+            const config = {
+                segments,
+                trafficLight: trafficLightConfig,
+                targetTime: document.getElementById('targetTime').value
+            };
+            localStorage.setItem('commuteConfig', JSON.stringify(config));
+            calculate();
+        }
+        
+        // 渲染路段
+        function renderSegments() {
+            const container = document.getElementById('segments');
+            container.innerHTML = segments.map((seg, i) => `
+                <div class="segment">
+                    <div class="segment-icon ${seg.type}">${seg.icon}</div>
+                    <div class="segment-info">
+                        <div class="segment-name">${seg.name}</div>
+                        <div class="segment-desc">${seg.desc}</div>
+                    </div>
+                    <div class="segment-time">
+                        <input type="number" value="${seg.time}" min="0" 
+                               onchange="updateSegment(${i}, this.value)">
+                        <span>分钟</span>
+                    </div>
+                    <button class="delete-btn" onclick="deleteSegment(${i})">×</button>
+                </div>
+            `).join('');
+            calculate();
+        }
+        
+        // 更新路段时间
+        function updateSegment(index, value) {
+            segments[index].time = parseInt(value) || 0;
+            saveConfig();
+        }
+        
+        // 删除路段
+        function deleteSegment(index) {
+            segments.splice(index, 1);
+            renderSegments();
+            saveConfig();
+        }
+        
+        // 添加路段
+        function addSegment() {
+            const types = [
+                { icon: '🚶', type: 'walk', name: '步行', desc: '步行路段' },
+                { icon: '🚇', type: 'metro', name: '地铁', desc: '乘车时间' },
+                { icon: '⏳', type: 'wait', name: '等待', desc: '等待时间' },
+                { icon: '🚦', type: 'light', name: '红绿灯', desc: '路口等待' },
+            ];
+            const type = types[Math.floor(Math.random() * types.length)];
+            segments.push({ ...type, time: 5 });
+            renderSegments();
+            saveConfig();
+        }
+        
+        // 计算出门时间
+        function calculate() {
+            const targetTime = document.getElementById('targetTime').value;
+            if (!targetTime) return;
+            
+            const totalMinutes = segments.reduce((sum, seg) => sum + (seg.time || 0), 0);
+            document.getElementById('totalTime').textContent = `${totalMinutes} 分钟`;
+            
+            const [hours, minutes] = targetTime.split(':').map(Number);
+            const targetDate = new Date();
+            targetDate.setHours(hours, minutes, 0, 0);
+            
+            const leaveDate = new Date(targetDate.getTime() - totalMinutes * 60 * 1000);
+            
+            const leaveTimeStr = leaveDate.toTimeString().slice(0, 5);
+            document.getElementById('leaveTime').textContent = leaveTimeStr;
+            document.getElementById('resultDetail').textContent = 
+                `总通勤 ${totalMinutes} 分钟，预计 ${targetTime} 到达`;
+            
+            updateCountdown(leaveDate);
+        }
+        
+        // 更新倒计时
+        function updateCountdown(leaveDate) {
+            const now = new Date();
+            const diff = leaveDate.getTime() - now.getTime();
+            
+            const countdownEl = document.getElementById('countdown');
+            
+            if (diff <= 0) {
+                countdownEl.textContent = '该出门了！';
+                countdownEl.className = 'countdown-time urgent';
+            } else {
+                const hours = Math.floor(diff / 3600000);
+                const minutes = Math.floor((diff % 3600000) / 60000);
+                const seconds = Math.floor((diff % 60000) / 1000);
+                
+                countdownEl.textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (diff < 300000) { // 5分钟内
+                    countdownEl.className = 'countdown-time urgent';
+                } else {
+                    countdownEl.className = 'countdown-time ok';
+                }
+            }
+        }
+        
+        // 更新红绿灯状态
+        function updateTrafficLight() {
+            const lastGreen = document.getElementById('lastGreenTime').value;
+            if (!lastGreen) {
+                document.getElementById('lightText').textContent = '等待校准...';
+                document.getElementById('redLight').classList.remove('active');
+                document.getElementById('greenLight').classList.remove('active');
+                return;
+            }
+            
+            const redDuration = trafficLightConfig.redDuration;
+            const greenDuration = trafficLightConfig.greenDuration;
+            const cycleDuration = redDuration + greenDuration;
+            
+            const [h, m, s] = lastGreen.split(':').map(Number);
+            const lastGreenDate = new Date();
+            lastGreenDate.setHours(h, m, s || 0, 0);
+            
+            const now = new Date();
+            const elapsed = Math.floor((now.getTime() - lastGreenDate.getTime()) / 1000);
+            const cyclePosition = ((elapsed % cycleDuration) + cycleDuration) % cycleDuration;
+            
+            const redLight = document.getElementById('redLight');
+            const greenLight = document.getElementById('greenLight');
+            const lightText = document.getElementById('lightText');
+            
+            if (cyclePosition < greenDuration) {
+                // 绿灯
+                redLight.classList.remove('active');
+                greenLight.classList.add('active');
+                const remaining = greenDuration - cyclePosition;
+                lightText.textContent = `🟢 绿灯 ${remaining}秒`;
+            } else {
+                // 红灯
+                redLight.classList.add('active');
+                greenLight.classList.remove('active');
+                const remaining = cycleDuration - cyclePosition;
+                lightText.textContent = `🔴 红灯 ${remaining}秒`;
+            }
+        }
+        
+        // 初始化
+        loadConfig();
+        
+        // 每秒更新
+        setInterval(() => {
+            const targetTime = document.getElementById('targetTime').value;
+            if (targetTime) {
+                const totalMinutes = segments.reduce((sum, seg) => sum + (seg.time || 0), 0);
+                const [hours, minutes] = targetTime.split(':').map(Number);
+                const targetDate = new Date();
+                targetDate.setHours(hours, minutes, 0, 0);
+                const leaveDate = new Date(targetDate.getTime() - totalMinutes * 60 * 1000);
+                updateCountdown(leaveDate);
+            }
+            updateTrafficLight();
+        }, 1000);
+        
+        // 目标时间变化时重新计算
+        document.getElementById('targetTime').addEventListener('change', calculate);
+    </script>
+</body>
+</html>
